@@ -4,8 +4,12 @@ SCRIPT_DIR=$(cd $(dirname "$0"); pwd -P)
 
 TAG_NAME="$1"
 DIST_DIR="$2"
-REPO="$3"
-PUBLISH_BRANCH="$4"
+PUBLISH_BRANCH="$3"
+REPO="$4"
+
+if [[ -z "${REPO}" ]]; then
+  REPO="${GITHUB_REPOSITORY}"
+fi
 
 "${SCRIPT_DIR}/scripts/build-module-metadata.sh" "${TAG_NAME}" "${DIST_DIR}" "${REPO}"
 cp README.md "${DIST_DIR}"
