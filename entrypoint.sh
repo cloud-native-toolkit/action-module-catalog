@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$(cd $(basename "$0"); pwd -P)
+SCRIPT_DIR=$(cd $(dirname "$0"); pwd -P)
 
 TAG_NAME="$1"
 DIST_DIR="$2"
