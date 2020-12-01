@@ -1,0 +1,25 @@
+name: Module catalog
+description: Generates the catalog entry for the module catalog
+inputs:
+  tagName:
+    description: The tag that will used for the module version
+    required: true
+  distDir:
+    description: The directory where the catalog should be output
+    required: true
+  repoSlug:
+    description: The git repo slug (owner/repo)
+    required: true
+  publishBranch:
+    description: The branch where the catalog should be published
+    required: false
+    default: gh-pages
+runs:
+  using: docker
+  image: Dockerfile
+  entrypoint: entrypoint.sh
+  args:
+    - ${{ inputs.tagName }}
+    - ${{ inputs.distDir }}
+    - ${{ inputs.repoSlug }}
+    - ${{ inputs.publishBranch }}
