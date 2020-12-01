@@ -7,6 +7,9 @@ inputs:
   distDir:
     description: The directory where the catalog should be output
     required: true
+  repoSlug:
+    description: The git repo slug (owner/repo)
+    required: true
   publishBranch:
     description: The branch where the catalog should be published
     required: false
@@ -17,5 +20,5 @@ runs:
   args:
     - ${{ inputs.tagName }}
     - ${{ inputs.distDir }}
-    - ${{ env.GITHUB_REPOSITORY }}
+    - ${{ inputs.repoSlug }}
     - ${{ inputs.publishBranch }}
