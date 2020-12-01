@@ -4,7 +4,7 @@ UPDATE_DIR="$1"
 
 if [[ -f "index.yaml" ]]; then
   yq r index.yaml versions | yq p - versions > tmp.yaml
-  yq m -i -a "${UPDATE_DIR}/module.yaml" tmp.yaml
+  yq m -i -a=append "${UPDATE_DIR}/module.yaml" tmp.yaml
   rm tmp.yaml
 fi
 
