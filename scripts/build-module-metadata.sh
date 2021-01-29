@@ -50,6 +50,7 @@ cat "${MODULE_DIR}/variables.tf" | \
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).description" "${description}"
     fi
     if [[ -n "${defaultValue}" ]]; then
+      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).default" "${defaultValue}"
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).optional" "true"
     fi
 done
