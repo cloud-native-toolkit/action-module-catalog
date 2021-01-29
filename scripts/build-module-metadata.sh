@@ -33,9 +33,9 @@ cat "${MODULE_DIR}/variables.tf" | \
   grep variable | \
   while read variable; do
     name=$(echo "$variable" | sed -E "s/variable +\"([^ ]+)\".*/\1/g")
-    type=$(echo "$variable" | sed -E "s/.*type += +([^ ]+).*/\1/g")
-    description=$(echo "$variable" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
-    defaultValue=$(echo "$variable" | grep "default" | sed -E "s/.*default += +(\"[^\"]*\"|true|false).*/\1/g")
+    type=$(echo "$variable" | grep -E "type +=" | sed -E "s/.*type += +([^ ]+).*/\1/g")
+    description=$(echo "$variable" | grep -E "description +=" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
+    defaultValue=$(echo "$variable" | grep -E "default +=" | sed -E "s/.*default += +([^#}]+).*/\1/g" | xargs)
 
     if [[ -z "${type}" ]]; then
       type="string"
@@ -50,7 +50,14 @@ cat "${MODULE_DIR}/variables.tf" | \
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).description" "${description}"
     fi
     if [[ -n "${defaultValue}" ]]; then
-      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).default" "${defaultValue}"
+      if [[ "${type}" == "string" ]]; then
+        defaultValue=${defaultValue//\"/}
+        tag=(--tag '!!str')
+      else
+        tag=()
+      fi
+
+      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).default" "${tag[@]}" "${defaultValue}"
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).optional" "true"
     fi
 done
