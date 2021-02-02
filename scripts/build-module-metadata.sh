@@ -7,6 +7,10 @@ VERSION="$1"
 DEST_DIR="$2"
 REPO_SLUG="$3"
 
+if [[ -z "${VERSION}" ]]; then
+  VERSION="0.0.0"
+fi
+
 if [[ -z "${DEST_DIR}" ]]; then
   DEST_DIR="${MODULE_DIR}/dist"
 fi
@@ -35,7 +39,7 @@ cat "${MODULE_DIR}/variables.tf" | \
     name=$(echo "$variable" | sed -E "s/variable +\"([^ ]+)\".*/\1/g")
     type=$(echo "$variable" | grep -E "type +=" | sed -E "s/.*type += +([^ ]+).*/\1/g")
     description=$(echo "$variable" | grep -E "description +=" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
-    defaultValue=$(echo "$variable" | grep -E "default +=" | sed -E "s/.*default += +([^#}]+).*/\1/g" | xargs)
+    defaultValue=$(echo "$variable" | grep -E "default +=" | sed -E "s/.*default += +([^#}]+).*/\1/g")
 
     if [[ -z "${type}" ]]; then
       type="string"
@@ -50,6 +54,8 @@ cat "${MODULE_DIR}/variables.tf" | \
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).description" "${description}"
     fi
     if [[ -n "${defaultValue}" ]]; then
+      defaultValue=$(echo "${defaultValue}" | xargs)
+
       if [[ "${type}" == "string" ]]; then
         defaultValue=${defaultValue//\"/}
         tag=(--tag '!!str')
