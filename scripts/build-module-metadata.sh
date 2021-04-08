@@ -32,14 +32,14 @@ yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}version" "${VERSION}"
 
 cat "${MODULE_DIR}/variables.tf" | \
   grep -vE "^ *#" | \
-  tr '\n' ' ' | \
+  tr '\n' '~' | \
   sed $'s/variable/\\\nvariable/g' | \
   grep variable | \
   while read variable; do
     name=$(echo "$variable" | sed -E "s/variable +\"([^ ]+)\".*/\1/g")
-    type=$(echo "$variable" | grep -E "type +=" | sed -E "s/.*type += +([^ ]+).*/\1/g")
-    description=$(echo "$variable" | grep -E "description +=" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
-    defaultValue=$(echo "$variable" | grep -E "default +=" | sed -E "s/.*default += +([^#}]+).*/\1/g")
+    type=$(echo "$variable" | grep -E "type +=" | perl -pe "s/.*type += +(.+?)( *description *=.*| *type *=.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    description=$(echo "$variable" | grep -E "description +=" | perl -pe "s/.*description += +(.+?)( *description *=.*| *type *=.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n' | sed -E "s/^\"(.*)\"$/\1/g")
+    defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *type *=.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
 
     if [[ -z "${type}" ]]; then
       type="string"
