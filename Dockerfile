@@ -1,4 +1,4 @@
-FROM quay.io/ibmgaragecloud/cli-tools:v0.13.1-lite
+FROM quay.io/ibmgaragecloud/cli-tools:v0.13.5-lite
 
 COPY ./entrypoint.sh /action/entrypoint.sh
 COPY ./scripts /action/scripts/
