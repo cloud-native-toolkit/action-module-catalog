@@ -70,20 +70,24 @@ cat "${MODULE_DIR}/variables.tf" | \
     fi
 done
 
-cat "${MODULE_DIR}/outputs.tf" | \
-  grep -vE "^ *#" | \
-  tr '\n' ' ' | \
-  sed $'s/output/\\\noutput/g' | \
-  grep output | \
-  while read output; do
-    name=$(echo "$output" | sed -E "s/output +\"([^ ]+)\".*/\1/g")
-    description=$(echo "$output" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
+if [[ -f "${MODULE_DIR}/outputs.tf" ]]; then
+  cat "${MODULE_DIR}/outputs.tf" | \
+    grep -vE "^ *#" | \
+    tr '\n' ' ' | \
+    sed $'s/output/\\\noutput/g' | \
+    grep output | \
+    while read output; do
+      name=$(echo "$output" | sed -E "s/output +\"([^ ]+)\".*/\1/g")
+      description=$(echo "$output" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
 
-    if [[ -z $(yq r "${DEST_DIR}/module.yaml" "${PREFIX}outputs(name==${name}).name") ]]; then
-      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}outputs[+].name" "${name}"
-    fi
+      if [[ -z $(yq r "${DEST_DIR}/module.yaml" "${PREFIX}outputs(name==${name}).name") ]]; then
+        yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}outputs[+].name" "${name}"
+      fi
 
-    if [[ -n "${description}" ]]; then
-      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}outputs(name==${name}).description" "${description}"
-    fi
-done
+      if [[ -n "${description}" ]]; then
+        yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}outputs(name==${name}).description" "${description}"
+      fi
+  done
+else
+  yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}outputs" "[]"
+fi
