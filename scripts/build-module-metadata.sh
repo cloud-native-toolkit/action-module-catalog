@@ -30,6 +30,8 @@ PREFIX='versions[0].'
 
 yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}version" "${VERSION}"
 
+set -e
+
 cat "${MODULE_DIR}/variables.tf" | \
   grep -vE "^ *#" | \
   tr '\n' '~' | \
