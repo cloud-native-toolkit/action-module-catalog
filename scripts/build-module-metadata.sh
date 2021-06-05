@@ -44,7 +44,11 @@ cat "${MODULE_DIR}/variables.tf" | \
     defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *type *=.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
 
     if [[ -z "${type}" ]]; then
-      type="string"
+      if [[ "${defaultValue}" == "[]" ]]; then
+        type="list(object({}))"
+      else
+        type="string"
+      fi
     fi
 
     if [[ -z $(yq r "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).name") ]]; then
