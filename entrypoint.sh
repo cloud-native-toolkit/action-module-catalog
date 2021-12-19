@@ -11,7 +11,7 @@ if [[ -z "${REPO}" ]]; then
   REPO="${GITHUB_REPOSITORY}"
 fi
 
-"${SCRIPT_DIR}/scripts/build-module-metadata.sh" "${TAG_NAME}" "${DIST_DIR}" "${REPO}"
+"${SCRIPT_DIR}/scripts/build-module-metadata-yq4.sh" "${TAG_NAME}" "${DIST_DIR}" "${REPO}"
 cp README.md "${DIST_DIR}"
 
 if [[ $(curl -L "https://raw.githubusercontent.com/${REPO}/${PUBLISH_BRANCH}/index.yaml") == "404: Not Found" ]]; then
@@ -20,4 +20,4 @@ else
   curl -LO "https://raw.githubusercontent.com/${REPO}/${PUBLISH_BRANCH}/index.yaml"
 fi
 
-"${SCRIPT_DIR}/scripts/merge-module-metadata.sh" "${DIST_DIR}"
+"${SCRIPT_DIR}/scripts/merge-module-metadata-yq4.sh" "${DIST_DIR}"
