@@ -21,14 +21,20 @@ fi
 
 mkdir -p "${DEST_DIR}"
 
-cp "${MODULE_DIR}/module.yaml" "${DEST_DIR}/module.yaml"
+yq4 e '... comments=""' "${MODULE_DIR}/module.yaml" > "${DEST_DIR}/module.yaml"
 
 echo "id: github.com/${REPO_SLUG}" > "${DEST_DIR}/module.yaml"
 cat "${MODULE_DIR}/module.yaml" >> "${DEST_DIR}/module.yaml"
 
+if [[ "${VERSION}" =~ v{0,1}0.0.0 ]]; then
+  echo "Found version 0.0.0. Creating empty metadata."
+  yq4 e -i '.versions = []' "${DEST_DIR}/module.yaml"
+  exit 0
+fi
+
 export VERSION
 
-yq e -i '.versions[0].version=env(VERSION)' "${DEST_DIR}/module.yaml"
+yq4 e -i '.versions[0].version=env(VERSION)' "${DEST_DIR}/module.yaml"
 
 set -e
 
@@ -47,11 +53,11 @@ cat "${MODULE_DIR}/variables.tf" | \
       type="string"
     fi
 
-    if [[ -z $(NAME="${name}" yq e '.versions[0] | .variables[] | select(.name == env(NAME)) | .name' "${DEST_DIR}/module.yaml") ]]; then
-      NAME="${name}" yq e -i '.versions[0].variables += {"name": env(NAME)}' "${DEST_DIR}/module.yaml"
+    if [[ -z $(NAME="${name}" yq4 e '.versions[0] | .variables[] | select(.name == env(NAME)) | .name' "${DEST_DIR}/module.yaml") ]]; then
+      NAME="${name}" yq4 e -i '.versions[0].variables += {"name": env(NAME)}' "${DEST_DIR}/module.yaml"
     fi
 
-    NAME="${name}" TYPE="${type}" DESC="${description}" yq e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .type = env(TYPE) | .description = env(DESC))' "${DEST_DIR}/module.yaml"
+    NAME="${name}" TYPE="${type}" DESC="${description}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .type = env(TYPE) | .description = env(DESC))' "${DEST_DIR}/module.yaml"
 
     if [[ -n "${defaultValue}" ]]; then
       defaultValue=$(echo "${defaultValue}" | xargs)
@@ -60,12 +66,12 @@ cat "${MODULE_DIR}/variables.tf" | \
         defaultValue=${defaultValue//\"/}
 
         if [[ -z "${defaultValue}" ]]; then
-          NAME="${name}" yq e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = "")' "${DEST_DIR}/module.yaml"
+          NAME="${name}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = "")' "${DEST_DIR}/module.yaml"
         else
-          NAME="${name}" DEFAULT="${defaultValue}" yq e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = env(DEFAULT)) tag= "!!str"' "${DEST_DIR}/module.yaml"
+          NAME="${name}" DEFAULT="${defaultValue}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = env(DEFAULT)) tag= "!!str"' "${DEST_DIR}/module.yaml"
         fi
       else
-        NAME="${name}" DEFAULT="${defaultValue}" yq e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = env(DEFAULT))' "${DEST_DIR}/module.yaml"
+        NAME="${name}" DEFAULT="${defaultValue}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .default = env(DEFAULT))' "${DEST_DIR}/module.yaml"
       fi
     fi
 done
@@ -80,18 +86,18 @@ if [[ -f "${MODULE_DIR}/outputs.tf" ]]; then
       name=$(echo "$output" | sed -E "s/output +\"([^ ]+)\".*/\1/g")
       description=$(echo "$output" | sed -E "s/.*description += *\"([^\"]*)\".*/\1/g")
 
-      if [[ -z $(yq e '.versions[0] | .outputs // ""' "${DEST_DIR}/module.yaml") ]]; then
-        yq e -i '.versions[0].outputs = []' "${DEST_DIR}/module.yaml"
+      if [[ -z $(yq4 e '.versions[0] | .outputs // ""' "${DEST_DIR}/module.yaml") ]]; then
+        yq4 e -i '.versions[0].outputs = []' "${DEST_DIR}/module.yaml"
       fi
 
-      if [[ -z $(NAME="${name}" yq e '.versions[0] | .outputs[] | select(.name == env(NAME)) | .name' "${DEST_DIR}/module.yaml") ]]; then
-        NAME="${name}" yq e -i -P '.versions[0].outputs += {"name": env(NAME)}' "${DEST_DIR}/module.yaml"
+      if [[ -z $(NAME="${name}" yq4 e '.versions[0] | .outputs[] | select(.name == env(NAME)) | .name' "${DEST_DIR}/module.yaml") ]]; then
+        NAME="${name}" yq4 e -i -P '.versions[0].outputs += {"name": env(NAME)}' "${DEST_DIR}/module.yaml"
       fi
 
       if [[ -n "${description}" ]]; then
-        NAME="${name}" DESC="${description}" yq e -i 'with(.versions[0] | .outputs[] | select(.name == env(NAME)); .description = env(DESC))' "${DEST_DIR}/module.yaml"
+        NAME="${name}" DESC="${description}" yq4 e -i 'with(.versions[0] | .outputs[] | select(.name == env(NAME)); .description = env(DESC))' "${DEST_DIR}/module.yaml"
       fi
   done
 else
-  yq e -i '.versions[0].outputs=[]' "${DEST_DIR}/module.yaml"
+  yq4 e -i '.versions[0].outputs=[]' "${DEST_DIR}/module.yaml"
 fi
