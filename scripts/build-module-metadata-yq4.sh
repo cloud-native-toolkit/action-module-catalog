@@ -45,9 +45,10 @@ cat "${MODULE_DIR}/variables.tf" | \
   grep variable | \
   while read variable; do
     name=$(echo "$variable" | sed -E "s/variable +\"([^ ]+)\".*/\1/g")
-    type=$(echo "$variable" | grep -E "type +=" | perl -pe "s/.*type += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
-    description=$(echo "$variable" | grep -E "description +=" | perl -pe "s/.*description += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n' | sed -E "s/^\"(.*)\"$/\1/g")
-    defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    type=$(echo "$variable" | grep -E "type +=" | perl -pe "s/.*type += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    description=$(echo "$variable" | grep -E "description +=" | perl -pe "s/.*description += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n' | sed -E "s/^\"(.*)\"$/\1/g")
+    defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    sensitive=$(echo "$variable" | grep -E "sensitive +=" | perl -pe "s/.*sensitive += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
 
     if [[ -z "${type}" ]]; then
       type="string"
@@ -58,6 +59,10 @@ cat "${MODULE_DIR}/variables.tf" | \
     fi
 
     NAME="${name}" TYPE="${type}" DESC="${description}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .type = env(TYPE) | .description = env(DESC))' "${DEST_DIR}/module.yaml"
+
+    if [[ -n "${sensitive}" ]]; then
+      NAME="${name}" SENSITIVE="${sensitive}" yq4 e -i 'with(.versions[0] | .variables[] | select(.name == env(NAME)); .sensitive = env(SENSITIVE) == "true")' "${DEST_DIR}/module.yaml"
+    fi
 
     if [[ -n "${defaultValue}" ]]; then
       defaultValue=$(echo "${defaultValue}" | xargs)

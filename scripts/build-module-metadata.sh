@@ -39,9 +39,10 @@ cat "${MODULE_DIR}/variables.tf" | \
   grep variable | \
   while read variable; do
     name=$(echo "$variable" | sed -E "s/variable +\"([^ ]+)\".*/\1/g")
-    type=$(echo "$variable" | grep -E "type +=" | perl -pe "s/.*type += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
-    description=$(echo "$variable" | grep -E "description +=" | perl -pe "s/.*description += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n' | sed -E "s/^\"(.*)\"$/\1/g")
-    defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    type=$(echo "$variable" | grep -E "type +=" | perl -pe "s/.*type += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    description=$(echo "$variable" | grep -E "description +=" | perl -pe "s/.*description += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n' | sed -E "s/^\"(.*)\"$/\1/g")
+    defaultValue=$(echo "$variable" | grep -E "default +=" | perl -pe "s/.*default += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
+    sensitive=$(echo "$variable" | grep -E "sensitive +=" | perl -pe "s/.*sensitive += +(.+?)( *description *=.*| *sensitive *=.*| *type *=.*| *validation *{.*| *default *=.*|[ ~]*}[ ~]*$)/\1/g" | tr '~' '\n')
 
     if [[ -z "${type}" ]]; then
       type="string"
@@ -54,6 +55,9 @@ cat "${MODULE_DIR}/variables.tf" | \
     yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).type" "${type}"
     if [[ -n "${description}" ]]; then
       yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).description" "${description}"
+    fi
+    if [[ -n "${sensitive}" ]]; then
+      yq w -i "${DEST_DIR}/module.yaml" "${PREFIX}variables(name==${name}).sensitive" "${sensitive}"
     fi
     if [[ -n "${defaultValue}" ]]; then
       defaultValue=$(echo "${defaultValue}" | xargs)
